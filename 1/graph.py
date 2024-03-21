@@ -1,9 +1,6 @@
-from datetime import datetime
-import heapq
-import sys
 from geopy.distance import geodesic
-
-
+import time
+import math
 
 SPEED = 19
 
@@ -11,6 +8,10 @@ def splitTime(date):
     splitDate = date.split(":")
     return int(splitDate[0])*60+int(splitDate[1])
 
+def joinTime(time):
+    hours = math.floor(time/60)
+    minutes = time%60
+    return f"{hours}:{minutes}:00"
 
     
 
@@ -73,38 +74,48 @@ class Graph:
 
     def getNeighbors(self, start_node):
         return self.nodes[start_node].edges
-
-    def dijkstra_algorithm(self, start_node, end_node, start_time):
-        unvisited_nodes = list(self.nodes)
     
-        shortest_path = {}
-        current_time = splitTime(start_time)
-        previous_nodes = {}
-     
-        for node in unvisited_nodes:
-            shortest_path[node] = float('inf') 
-        shortest_path[start_node] = splitTime(start_time)
 
-        while unvisited_nodes:
-            current_min_node = None
-            for node in unvisited_nodes: 
-                if current_min_node == None:
-                    current_min_node = node
-                elif shortest_path[node] < shortest_path[current_min_node]:
-                    current_min_node = node
-            neighbors = self.getNeighbors(current_min_node)
-            current_time = shortest_path[current_min_node]
-            for neighbor in neighbors:
-                tentative_value = float(shortest_path[current_min_node]) + float(neighbor.getWeight(current_time))
-                if tentative_value < shortest_path[neighbor.end_node.name]:
-                    shortest_path[neighbor.end_node.name] = tentative_value
-                    previous_nodes[neighbor.end_node.name] = (current_min_node,neighbor)
-            unvisited_nodes.remove(current_min_node)
-
-        return previous_nodes, shortest_path
-    
+    def djikstra(self,start_node,end_node,start_time):
+        test_numer = 0
+        algorithm_start_time = time.time()
+        visited = {}
+        unvisited = {}
+        for node in self.nodes:
+            unvisited[node] = [float('inf'),None]
+        unvisited[start_node] = [splitTime(start_time),None]
+        finished = False
+        while finished == False:
+            test_numer+=1
+            if(len(unvisited)==0):
+                finished = True
+            else:
+                current_min_node = None
+                for node in unvisited:
+                    if current_min_node == None:
+                        current_min_node = node
+                    elif unvisited[node][0] < unvisited[current_min_node][0]:
+                        current_min_node = node
+                current_time = unvisited[current_min_node][0]
+                neighbors = self.getNeighbors(current_min_node)       
+                for neighbor in neighbors:
+                    if(neighbor.end_node.name not in visited):
+                        new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight(current_time))
+                        if(new_g_score<unvisited[neighbor.end_node.name][0]):
+                            unvisited[neighbor.end_node.name][0] = new_g_score
+                            unvisited[neighbor.end_node.name][1] = neighbor
+                visited[current_min_node] = unvisited[current_min_node][1]
+                del unvisited[current_min_node]
+        algorithm_end_time = time.time()
+        elapsed_time = algorithm_end_time - algorithm_start_time
+        print(f"Algorytm djikstra zajął: {elapsed_time}")
+        print(test_numer)
+        self.print_a_star(start_node,end_node,visited)
+        return visited
 
     def a_star(self,start_node,end_node,start_time):
+        test_numer = 0
+        algorithm_start_time = time.time()
         visited = {}
         unvisited = {}
         for node in self.nodes:
@@ -113,8 +124,9 @@ class Graph:
         unvisited[start_node] = [splitTime(start_time),f_score,None]
         finished = False
         while finished == False:
+            test_numer+=1
             if(len(unvisited)==0):
-                finished == True
+                finished = True
             else:
                 current_min_node = None
                 for node in unvisited:
@@ -138,23 +150,29 @@ class Graph:
                                 unvisited[neighbor.end_node.name][2] = neighbor
                     visited[current_min_node] = unvisited[current_min_node][2]
                     del unvisited[current_min_node]
+        algorithm_end_time = time.time()
+        elapsed_time = algorithm_end_time - algorithm_start_time
+        print(f"Algorytm A* od czasu zajął: {elapsed_time}")
+        print(test_numer)
         return visited
 
 
 
     
 
-    def a_star_test(self,start_node,end_node,start_time):
+    def a_star_line(self,start_node,end_node,start_time):
+        test_numer = 0
+        algorithm_start_time = time.time()
         visited = {}
         unvisited = {}
         f_score = 10
         current_time = splitTime(start_time)
         for node in self.nodes:
-            # [waga,waga z heurystyka,przystanek,linia, czas]
-            unvisited[node] = [float('inf'),float('inf'),None,None,0]
-        unvisited[start_node] = [0,f_score,None,None,current_time]
+            unvisited[node] = [float('inf'),float('inf'),None]
+        unvisited[start_node] = [0,f_score,None]
         finished = False
         while finished == False:
+            test_numer+=1
             if(len(unvisited)==0):
                 finished = True
             else:
@@ -171,18 +189,49 @@ class Graph:
                     neighbors = self.getNeighbors(current_min_node)
                     for neighbor in neighbors:
                         if(neighbor.end_node.name not in visited):
-                            new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight_line(unvisited[current_min_node][3],unvisited[current_min_node][4]))
+                            if(unvisited[current_min_node][2]==None):
+                                new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight_line(None,current_time))
+                            else:
+                                new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight_line(unvisited[current_min_node][2].line,unvisited[current_min_node][2].arrival_time))
                             if(new_g_score<unvisited[neighbor.end_node.name][0]):
                                 unvisited[neighbor.end_node.name][0] = new_g_score
                                 unvisited[neighbor.end_node.name][1] = new_g_score + self.getHeuristic(neighbor.start_node,neighbor.end_node)
                                 unvisited[neighbor.end_node.name][2] = neighbor
-                                unvisited[neighbor.end_node.name][3] = neighbor.line
-                                unvisited[neighbor.end_node.name][4] = neighbor.arrival_time
 
                     visited[current_min_node] = unvisited[current_min_node][2]
                     del unvisited[current_min_node]
+        algorithm_end_time = time.time()
+        elapsed_time = algorithm_end_time - algorithm_start_time
+        print(f"Algorytm A* od liczby przesiadek zajął: {elapsed_time}")
+        print(test_numer)
         return visited  
 
 
-    # https://adacomputerscience.org/concepts/path_a_star?examBoard=all&stage=all
-    # jako heurestyke chyba najlepiej obliczanie czasu na podstawie odleglosci
+    def a_star_algorithm(self,start_node,end_node,type,start_time):
+        
+        if(type == "t"):
+            self.print_a_star(start_node,end_node,self.a_star(start_node,end_node,start_time))
+        if(type == "p"):
+            self.print_a_star(start_node,end_node,self.a_star_line(start_node,end_node,start_time))
+        else:
+            return "Wybrales zly typ"
+    
+
+    def print_a_star(self, start_node, target_node, path):
+        paths = {}
+
+        node = target_node
+        while node != start_node:
+            current_line = path[node].line
+            if current_line not in paths:
+                paths[current_line] = [path[node]]
+            else:
+                paths[current_line].append(path[node])
+            node = path[node].start_node.name
+
+        for line, line_paths in paths.items():
+            print("Linia", line)
+            first_stop = line_paths[-1]  # Pierwszy przystanek na linii
+            last_stop = line_paths[0]    # Ostatni przystanek na linii
+            print(f"Przystanek start: {first_stop.start_node.name} | Przystanek koniec: {last_stop.end_node.name} | Czas odjazdu: {joinTime(first_stop.departure_time)} | Czas przyjazdu: {joinTime(last_stop.arrival_time)}")
+
