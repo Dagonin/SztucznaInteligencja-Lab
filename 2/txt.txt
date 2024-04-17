@@ -1,0 +1,21 @@
+strategie:
+Poruszanie się w strone wygranej
+1                - Priorytet wyjscia z bazy
+2                - Priorytet 1 pionka
+
+3   Tworzenie drabinki, żeby skakać jak najdalej
+4   Blokowanie skoków przeciwnika
+5   
+
+
+
+
+
+
+Heurystyki
+ - średnia odległość wszystkich pionków od wygranej
+ - odległość najgorszego pionka od wygranej
+ - dodatkowe punkty za skoki
+ - blokownie skoków
+ - nie zostawiac izolowanych pionków
+ - 2 piony moga sie przez siebie nawzajem przeskakiwać

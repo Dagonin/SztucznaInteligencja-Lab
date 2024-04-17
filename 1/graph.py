@@ -31,7 +31,7 @@ class Edge:
 
     def getWeight(self,currentTime):
         if(self.departure_time>=currentTime):
-            return self.departure_time - currentTime
+            return 1 + self.departure_time - currentTime
         else:
             return float('inf')
         
@@ -69,8 +69,8 @@ class Graph:
         self.edges.append(edge)
 
     def getHeuristic(self,start_node,end_node):
-        distance = geodesic(start_node.coordinates,end_node.coordinates).kilometers
-        return distance/SPEED
+        distance1 = math.sqrt(pow(start_node.coordinates[0] - end_node.coordinates[0],2) + pow(start_node.coordinates[1] - end_node.coordinates[1],2))
+        return distance1
 
     def getNeighbors(self, start_node):
         return self.nodes[start_node].edges
@@ -100,7 +100,10 @@ class Graph:
                 neighbors = self.getNeighbors(current_min_node)       
                 for neighbor in neighbors:
                     if(neighbor.end_node.name not in visited):
-                        new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight(current_time))
+                        if(unvisited[current_min_node][1]==None):
+                            new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight(current_time))
+                        else:
+                            new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight(unvisited[current_min_node][1].arrival_time))
                         if(new_g_score<unvisited[neighbor.end_node.name][0]):
                             unvisited[neighbor.end_node.name][0] = new_g_score
                             unvisited[neighbor.end_node.name][1] = neighbor
@@ -118,10 +121,11 @@ class Graph:
         algorithm_start_time = time.time()
         visited = {}
         unvisited = {}
+        f_score = 10
+        current_time = splitTime(start_time)
         for node in self.nodes:
             unvisited[node] = [float('inf'),float('inf'),None]
-        f_score = 10
-        unvisited[start_node] = [splitTime(start_time),f_score,None]
+        unvisited[start_node] = [0,f_score,None]
         finished = False
         while finished == False:
             test_numer+=1
@@ -134,20 +138,22 @@ class Graph:
                         current_min_node = node
                     elif unvisited[node][1] < unvisited[current_min_node][1]:
                         current_min_node = node
-                current_time = unvisited[current_min_node][0]
-
                 if(current_min_node==end_node):
                     finished = True
                     visited[current_min_node] = unvisited[current_min_node][2]
                 else:
-                    neighbors = self.getNeighbors(current_min_node)       
+                    neighbors = self.getNeighbors(current_min_node)
                     for neighbor in neighbors:
                         if(neighbor.end_node.name not in visited):
-                            new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight(current_time))
+                            if(unvisited[current_min_node][2]==None):
+                                new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight(current_time))
+                            else:
+                                new_g_score = float(unvisited[current_min_node][0]) + float(neighbor.getWeight(unvisited[current_min_node][2].arrival_time))
                             if(new_g_score<unvisited[neighbor.end_node.name][0]):
                                 unvisited[neighbor.end_node.name][0] = new_g_score
                                 unvisited[neighbor.end_node.name][1] = new_g_score + self.getHeuristic(neighbor.start_node,neighbor.end_node)
                                 unvisited[neighbor.end_node.name][2] = neighbor
+
                     visited[current_min_node] = unvisited[current_min_node][2]
                     del unvisited[current_min_node]
         algorithm_end_time = time.time()

@@ -1,5 +1,4 @@
 import pandas as pd
-
 import graph as G
 
 def splitTime(date):
@@ -25,9 +24,9 @@ for index, row in df.iterrows():
 
 
 # Algorytm Dijkstry
-start_node = 'Babimojska'  # Początkowy wierzchołek
-end_node = 'Biegasa'  # Wierzchołek docelowy
-start_time = "16:58:00"
+start_node = 'Piastowska'  # Początkowy wierzchołek
+end_node = 'FAT'  # Wierzchołek docelowy
+start_time = "12:00:00"
 
 
 # start_node = 'Pola'  # Początkowy wierzchołek
